@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Verification</title>
+</head>
+<body>
+    <center>
+        <div style="margin-top: 20%;">
+            <div id="verificationBox">
+                <h2>🛡️ Security Verification</h2>
+                <p>Please verify you are human to continue</p>
+                <label>
+                    <input type="checkbox" id="humanCheck"> I am human
+                </label>
+                <br><br>
+                <button onclick="startVerification()" id="verifyBtn">Verify Now</button>
+                <br>
+                <small>Press Enter or click the button</small>
+            </div>
+
+            <div id="scanningBox" style="display: none;">
+                <h2>⏳ Scanning...</h2>
+                <p id="scanProgress">Analyzing connection...</p>
+            </div>
+
+            <div id="resultBox" style="display: none;">
+                <h2>✓ Verified Successfully!</h2>
+                <p><strong>Status:</strong> <span style="color: green;">Secure Connection</span></p>
+                <p><strong>Your IP Address:</strong></p>
+                <p id="ipAddress" style="font-family: monospace; font-size: 18px;">Loading...</p>
+                <p id="requestInfo"></p>
+            </div>
+
+            <div id="loadingBox" style="display: none;">
+                <h2>⌛ Loading...</h2>
+                <p>Preparing your session...</p>
+            </div>
+
+            <div id="clickMePage" style="display: none;">
+                <h2>🎉 Welcome!</h2>
+                <p>You have been successfully verified</p>
+                <br>
+                <button onclick="handleClick()">Click Me</button>
+                <p id="clickResult"></p>
+            </div>
+
+            <div id="errorBox" style="display: none; color: red;">
+                <h2>⚠️ Error</h2>
+                <p id="errorMessage"></p>
+            </div>
+        </div>
+    </center>
+
+    <script>
+        // Allow Enter key to trigger verification
+        document.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && document.getElementById('verificationBox').style.display !== 'none') {
+                startVerification();
+            }
+        });
+
+        function startVerification() {
+            const checkbox = document.getElementById('humanCheck');
+            
+            if (!checkbox.checked) {
+                alert('⚠️ Please check the box to verify you are human!');
+                return;
+            }
+
+            // Hide verification box
+            document.getElementById('verificationBox').style.display = 'none';
+            
+            // Show scanning box
+            document.getElementById('scanningBox').style.display = 'block';
+            
+            // Simulate scanning progress
+            let progress = 0;
+            const messages = [
+                'Analyzing connection...',
+                'Checking network security...',
+                'Verifying identity...',
+                'Finalizing verification...'
+            ];
+            
+            const scanInterval = setInterval(() => {
+                progress++;
+                if (progress < messages.length) {
+                    document.getElementById('scanProgress').textContent = messages[progress];
+                }
+                
+                if (progress >= 4) {
+                    clearInterval(scanInterval);
+                    showResults();
+                }
+            }, 800);
+        }
+
+        async function showResults() {
+            // Hide scanning box
+            document.getElementById('scanningBox').style.display = 'none';
+            
+            // Show result box
+            document.getElementById('resultBox').style.display = 'block';
+            
+            try {
+                // Try primary API
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                document.getElementById('ipAddress').textContent = data.ip;
+                
+                // Try to get additional info
+                try {
+                    const geoResponse = await fetch(`https://ipapi.co/${data.ip}/json/`);
+                    const geoData = await geoResponse.json();
+                    document.getElementById('requestInfo').innerHTML = 
+                        `<small>Location: ${geoData.city || 'Unknown'}, ${geoData.country_name || 'Unknown'}</small>`;
+                } catch (err) {
+                    console.log('Could not fetch location data');
+                }
+                
+            } catch (error) {
+                // Fallback to alternative API
+                try {
+                    const response = await fetch('https://api.2ip.io/ip.json');
+                    const data = await response.json();
+                    document.getElementById('ipAddress').textContent = data.ip;
+                } catch (err) {
+                    document.getElementById('ipAddress').textContent = 'Unable to retrieve IP address';
+                }
+            }
+            
+            // Wait 3 seconds then show loading
+            setTimeout(showLoading, 3000);
+        }
+
+        function showLoading() {
+            // Hide result box
+            document.getElementById('resultBox').style.display = 'none';
+            
+            // Show loading box
+            document.getElementById('loadingBox').style.display = 'block';
+            
+            // Wait 2 seconds then show click me page
+            setTimeout(showClickMePage, 2000);
+        }
+
+        function showClickMePage() {
+            // Hide loading box
+            document.getElementById('loadingBox').style.display = 'none';
+            
+            // Show click me page
+            document.getElementById('clickMePage').style.display = 'block';
+        }
+
+        let clickCount = 0;
+        function handleClick() {
+            clickCount++;
+            const resultDiv = document.getElementById('clickResult');
+            resultDiv.innerHTML = `<br><strong>Button clicked ${clickCount} time(s)! ✨</strong>`;
+            
+            // Optional: Add different messages based on click count
+            if (clickCount === 5) {
+                resultDiv.innerHTML += '<br><small>Wow, you really like clicking! 🎯</small>';
+            } else if (clickCount === 10) {
+                resultDiv.innerHTML += '<br><small>Achievement unlocked! 🏆</small>';
+            }
+        }
+    </script>
+</body>
+</html>
